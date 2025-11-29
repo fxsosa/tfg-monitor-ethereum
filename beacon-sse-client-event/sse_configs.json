@@ -1,0 +1,23 @@
+[
+  {
+    "url": "http://unstable.mainnet.beacon-api.nimbus.team/",
+    "endpoint": "/eth/v1/events",
+    "topics": "head,block,block_gossip,attestation,voluntary_exit,bls_to_execution_change,proposer_slashing,attester_slashing,finalized_checkpoint,chain_reorg,contribution_and_proof,light_client_finality_update,light_client_optimistic_update,blob_sidecar",
+    "source": "http://unstable.mainnet.beacon-api.nimbus.team/",
+    "network": "mainnet"
+  },
+  {
+    "url": "https://ethereum-mainnet.core.chainstack.com/beacon/${SSE_CHAINSTACK_API_KEY}",
+    "endpoint": "/eth/v1/events",
+    "topics": "head,block,block_gossip,attestation,voluntary_exit,bls_to_execution_change,proposer_slashing,attester_slashing,finalized_checkpoint,chain_reorg,contribution_and_proof,light_client_finality_update,light_client_optimistic_update,payload_attributes,blob_sidecar,data_column_sidecar",
+    "source": "https://ethereum-mainnet.core.chainstack.com/",
+    "network": "mainnet"
+  },
+  {
+    "url": "https://eth2-beacon-mainnet.nodereal.io/v1/${SSE_NODEREAL_API_KEY}",
+    "endpoint": "/eth/v1/events",
+    "topics": "head,block,attestation,voluntary_exit,proposer_slashing,attester_slashing,bls_to_execution_change,finalized_checkpoint,chain_reorg,contribution_and_proof,light_client_finality_update,light_client_optimistic_update,blob_sidecar",
+    "source": "https://eth2-beacon-mainnet.nodereal.io/v1/",
+    "network": "mainnet"
+  }
+]

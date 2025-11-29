@@ -1,0 +1,127 @@
+services:
+  nifi:
+    image: apache/nifi:2.4.0
+    container_name: nifi
+    environment:
+      - SINGLE_USER_CREDENTIALS_USERNAME=${NIFI_USER}
+      - SINGLE_USER_CREDENTIALS_PASSWORD=${NIFI_PASSWORD}
+      - TZ=${TZ}
+    ports:
+      - "8443:8443" # Login -> https://localhost:8443/nifi/#/login
+      - "8081:8081" # Puerto en donde se mandan los eventons con python
+    restart: unless-stopped
+    volumes:
+      - ./nifi_state/conf:/opt/nifi/nifi-current/conf # Volumen para el canvas
+      - ./nifi-python/:/opt/nifi/nifi-current/python_extensions # Volumen para las extensiones en python
+      - ./custom-nar/nifi-eth-events-processors-nar-1.0.0.nar:/opt/nifi/nifi-current/lib/nifi-eth-events-processors-nar-1.0.0.nar
+      - ./custom-nar/nifi-eth-events-services-nar-1.0.0.nar:/opt/nifi/nifi-current/lib/nifi-eth-events-services-nar-1.0.0.nar
+      - ./custom-nar/nifi-eth-events-services-api-nar-1.0.0.nar:/opt/nifi/nifi-current/lib/nifi-eth-events-services-api-nar-1.0.0.nar
+    depends_on:
+      - influxdb
+    networks:
+      - monitoring_net
+
+  influxdb:
+    image: influxdb:2.7.11-alpine
+    container_name: influxdb
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USER}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+      - DOCKER_INFLUXDB_INIT_RETENTION=4w # Retencion de 4 semanas
+      - TZ=${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - influxdb_data:/var/lib/influxdb2 # Volumen en donde se guardan los datos
+    ports:
+      - "8086:8086" # Login -> http://localhost:8086/signin
+    networks:
+      - monitoring_net
+
+  grafana:
+    image: grafana/grafana:12.0.0
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      # Variables GF para la vista publica de los dashboards sin login
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org.
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_BASIC_ENABLED=false            # desactivar basic auth
+      - GF_AUTH_DISABLE_LOGIN_FORM=true        # ocultar el formulario de login
+      - GF_AUTH_ANONYMOUS_HIDE_VERSION=true
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      - GF_EXPLORE_ENABLED=false
+      - GF_SECURITY_ALLOW_EMBEDDING=false
+      - GF_SECURITY_CONTENT_SECURITY_POLICY=true
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - INFLUX_USER=${INFLUXDB_USER}
+      - INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+      - INFLUXDB_READ_TOKEN=${INFLUXDB_READ_TOKEN}
+      - NOTIFICATION_WEBHOOK_URL=${NOTIFICATION_WEBHOOK_URL}
+      - NOTIFICATION_DISCORD_WEBHOOK_URL=${NOTIFICATION_DISCORD_WEBHOOK_URL}
+      - TZ=${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - ./grafana/provisioning/dashboards:/var/lib/grafana/dashboards # JSON de los dashboards cargados(las modificaciones deben exportarse y actualizarse)
+      - ./grafana/provisioning:/etc/grafana/provisioning # Configuracion y dashboards cargados
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+    networks:
+      - monitoring_net
+
+  #beacon-sse-client: # Contenedor que obtiene los eventos sse del cliente de Ethereum
+  #  image: python:3.11-slim
+  #  container_name: beacon-sse-client
+  #  working_dir: /app
+  #  volumes:
+  #    - ./beacon-sse-client-event:/app
+  #  command: >
+  #    sh -c "pip install --no-cache-dir -r requirements.txt && python main.py"
+  #  environment:
+  #    - NIFI_URL=${NIFI_URL} # Para insertar en el NIFI
+  #    - SSE_HEARTBEAT_INTERVAL=${SSE_HEARTBEAT_INTERVAL} # Para saber el status del script
+  #    - SSE_NODEREAL_API_KEY=${SSE_NODEREAL_API_KEY} # Variable para el nodo de NodeReal
+  #    - SSE_CHAINSTACK_API_KEY=${SSE_CHAINSTACK_API_KEY} # Variable para el nodo de NodeReal
+  #    - TZ=${TZ}
+  #  depends_on:
+  #    - nifi
+  #  networks:
+  #    - monitoring_net
+    
+  nginx: # Proxy reverso para grafana
+    image: nginx:alpine
+    container_name: grafana-proxy
+    #volumes:
+    #  - ./nginx/certs:/etc/nginx/certs:ro # Los certificados deben ser generados
+    #  - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - 80:80
+    depends_on:
+      - grafana
+    networks:
+      - monitoring_net
+    
+volumes:
+  influxdb_data:
+
+networks:
+  monitoring_net:
+    driver: bridge

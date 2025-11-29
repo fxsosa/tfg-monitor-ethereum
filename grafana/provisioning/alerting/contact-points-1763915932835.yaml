@@ -1,0 +1,48 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: Estado de la ingesta de eventos
+      receivers:
+        - uid: bf551tejegd1df
+          type: webhook
+          settings:
+            headers:
+                Content-Type: text/plain; charset=utf-8
+                Markdown: "yes"
+                Title: Estado de la ingesta de Eventos
+            httpMethod: POST
+            payload:
+                template: "{{- if eq .Status \"firing\" -}}\n\U0001F525 **[FIRING] {{ .CommonLabels.alertname }}**\n{{- else -}}\n✅ **[RECOVERY] {{ .CommonLabels.alertname }}**\n{{- end }}\n\n{{- if .CommonAnnotations.summary }}\n**Resumen:** {{ .CommonAnnotations.summary }}\n{{- end }}\n\n{{- if .CommonAnnotations.description }}\n**Descripción:** {{ .CommonAnnotations.description }}\n{{- end }}\n\n**Instancias afectadas:**\n{{- range .Alerts }}\n- `{{ .Labels.source }}` → *{{ .Status }}*\n{{- end }}\n"
+            url: ${NOTIFICATION_WEBHOOK_URL}
+          disableResolveMessage: false
+        - uid: ef551tejegd1ce
+          type: discord
+          settings:
+            message: "{{- if eq .Status \"firing\" -}}\n\U0001F525 **[FIRING] {{ .CommonLabels.alertname }}**\n{{- else -}}\n✅ **[RECOVERY] {{ .CommonLabels.alertname }}**\n{{- end }}\n\n{{- if .CommonAnnotations.summary }}\n**Resumen:** {{ .CommonAnnotations.summary }}\n{{- end }}\n\n{{- if .CommonAnnotations.description }}\n**Descripción:** {{ .CommonAnnotations.description }}\n{{- end }}\n\n**Instancias afectadas:**\n{{- range .Alerts }}\n- `{{ .Labels.source }}` → *{{ .Status }}*\n{{- end }}\n"
+            title: '{{ template "discord.default.title" . }}'
+            url: ${NOTIFICATION_DISCORD_WEBHOOK_URL}
+            use_discord_username: false
+          disableResolveMessage: false
+    - orgId: 1
+      name: Evento detectado
+      receivers:
+        - uid: cf552r246ygw0d
+          type: webhook
+          settings:
+            headers:
+                Content-Type: text/plain; charset=utf-8
+                Markdown: "yes"
+                Title: Evento detectado
+            httpMethod: POST
+            payload:
+                template: "{{- if eq .Status \"firing\" -}}\n\U0001F525 **[FIRING] {{ .CommonLabels.alertname }}**\n{{- else -}}\n✅ **[RECOVERY] {{ .CommonLabels.alertname }}**\n{{- end }}\n\n{{- if .CommonAnnotations.summary }}\n**Resumen:** {{ .CommonAnnotations.summary }}\n{{- end }}\n\n{{- if .CommonAnnotations.description }}\n**Descripción:** {{ .CommonAnnotations.description }}\n{{- end }}\n\n{{- if .CommonLabels.network }}\nNetwork: `{{ .CommonLabels.network }}`\n{{- end }}\n{{- if .CommonLabels.endpoint }}\nEndpoint: `{{ .CommonLabels.endpoint }}`\n{{- end }}\n{{- if .CommonLabels.event_type }}\nEvent type: `{{ .CommonLabels.event_type }}`\n{{- end }}\n\n**Instancias afectadas:**\n{{- range .Alerts }}\n- `{{ .Labels.source }}` → *{{ .Status }}*\n{{- end }}\n"
+            url: ${NOTIFICATION_WEBHOOK_URL}
+          disableResolveMessage: true
+        - uid: ff552gywogwe8b
+          type: discord
+          settings:
+            message: "{{- if eq .Status \"firing\" -}}\n\U0001F525 **[FIRING] {{ .CommonLabels.alertname }}**\n{{- else -}}\n✅ **[RECOVERY] {{ .CommonLabels.alertname }}**\n{{- end }}\n\n{{- if .CommonAnnotations.summary }}\n**Resumen:** {{ .CommonAnnotations.summary }}\n{{- end }}\n\n{{- if .CommonAnnotations.description }}\n**Descripción:** {{ .CommonAnnotations.description }}\n{{- end }}\n\n{{- if .CommonLabels.network }}\nNetwork: `{{ .CommonLabels.network }}`\n{{- end }}\n{{- if .CommonLabels.endpoint }}\nEndpoint: `{{ .CommonLabels.endpoint }}`\n{{- end }}\n{{- if .CommonLabels.event_type }}\nEvent type: `{{ .CommonLabels.event_type }}`\n{{- end }}\n\n**Instancias afectadas:**\n{{- range .Alerts }}\n- `{{ .Labels.source }}` → *{{ .Status }}*\n{{- end }}\n"
+            title: '{{ template "discord.default.title" . }}'
+            url: ${NOTIFICATION_DISCORD_WEBHOOK_URL}
+            use_discord_username: false
+          disableResolveMessage: true

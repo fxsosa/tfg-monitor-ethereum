@@ -1,0 +1,35 @@
+# Ignorar entornos virtuales de Python
+venv/
+env/
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Archivos de configuración sensibles
+.env
+
+# Archivos y carpetas de logs
+*.log
+logs/
+log/
+*.log.*
+
+# Archivos generados por Docker
+*.pid
+*.tar
+docker-compose.override.yml
+
+# Archivos temporales del sistema
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Archivos de nifi
+nifi_state/state/local/journals/*
+nifi_state/conf/archive/*
+nifi_state/state/local/checkpoint*
+nginx/certs/*
