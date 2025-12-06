@@ -4,11 +4,9 @@ datasources:
   - name: influxdb
     type: influxdb
     access: proxy
-    url: http://influxdb:8086/
-    basicAuth: true
-    basicAuthUser: ${INFLUXDB_USER}
+    url: ${INFLUXDB_URL}
+    basicAuth: false
     secureJsonData:
-      basicAuthPassword: ${INFLUXDB_PASSWORD}
       token: ${INFLUXDB_READ_TOKEN}
     isDefault: true
     jsonData:
